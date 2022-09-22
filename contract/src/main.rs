@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
 
-use casper_contract::contract_api::{runtime, account};
+use casper_contract::contract_api::{account, runtime};
 use casper_contract::unwrap_or_revert::UnwrapOrRevert;
 use casper_types::account::{AccountHash, ActionType, Weight};
 

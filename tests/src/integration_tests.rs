@@ -1,15 +1,16 @@
 #[cfg(test)]
 mod tests {
-    
+
     use casper_engine_test_support::{
-    ExecuteRequestBuilder, InMemoryWasmTestBuilder, DEFAULT_RUN_GENESIS_REQUEST, DEFAULT_ACCOUNT_ADDR};
+        ExecuteRequestBuilder, InMemoryWasmTestBuilder, DEFAULT_ACCOUNT_ADDR,
+        DEFAULT_RUN_GENESIS_REQUEST,
+    };
+    use casper_types::account::AccountHash;
     use casper_types::{runtime_args, RuntimeArgs};
-    use casper_types::account::{AccountHash};
 
     const ASSOCIATED_ACCOUNT_HASH: AccountHash = AccountHash::new([1u8; 32]); // hash of the associated account
-    const ASSOCIATED_ACCOUNT: &str = "deployment-account";  // the associated account argument
-    const CONTRACT_WASM: &str = "contract.wasm";            // file to pass to the instance of the EE
-
+    const ASSOCIATED_ACCOUNT: &str = "deployment-account"; // the associated account argument
+    const CONTRACT_WASM: &str = "contract.wasm"; // file to pass to the instance of the EE
 
     #[test]
     fn should_add_associated_key() {
@@ -20,8 +21,8 @@ mod tests {
         builder.run_genesis(&*DEFAULT_RUN_GENESIS_REQUEST).commit();
 
         let account = builder
-        .get_account(*DEFAULT_ACCOUNT_ADDR)
-        .expect("should have a primary account");
+            .get_account(*DEFAULT_ACCOUNT_ADDR)
+            .expect("should have a primary account");
 
         let associated_keys = account.associated_keys();
         assert!(!associated_keys.contains_key(&ASSOCIATED_ACCOUNT_HASH));
@@ -35,24 +36,18 @@ mod tests {
         // Create the execution request that will eventually be executed by the EE
         // Load the session wasm and pass in the runtime arguments
         // Sets up the session code to be executed in the default account using auth keys and default account address
-        let execute_request = ExecuteRequestBuilder::standard(
-            *DEFAULT_ACCOUNT_ADDR,
-            CONTRACT_WASM,
-            runtime_args,
-        )
-        .build();
+        let execute_request =
+            ExecuteRequestBuilder::standard(*DEFAULT_ACCOUNT_ADDR, CONTRACT_WASM, runtime_args)
+                .build();
 
         // Invoke the EE to execute the session code that we are testing
-        builder
-            .exec(execute_request)
-            .expect_success()
-            .commit();
+        builder.exec(execute_request).expect_success().commit();
 
         // Verify the results of the execution match our expectations from the contract using the test results
 
         let account = builder
-        .get_account(*DEFAULT_ACCOUNT_ADDR)
-        .expect("should have a primary account");
+            .get_account(*DEFAULT_ACCOUNT_ADDR)
+            .expect("should have a primary account");
 
         let associated_keys = account.associated_keys();
         assert!(associated_keys.contains_key(&ASSOCIATED_ACCOUNT_HASH));
