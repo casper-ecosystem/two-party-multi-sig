@@ -1,44 +1,53 @@
 #[cfg(test)]
 mod tests {
-    use casper_engine_test_support::{Code, Error, SessionBuilder, TestContextBuilder, Value};
-    use casper_types::{
-        account::AccountHash, runtime_args, PublicKey, RuntimeArgs, SecretKey, U512,
-    };
+    
+    use std::path::PathBuf;
+    use casper_engine_test_support::{
+    ExecuteRequestBuilder, InMemoryWasmTestBuilder, DEFAULT_RUN_GENESIS_REQUEST, DEFAULT_ACCOUNT_ADDR};
+    use casper_types::{runtime_args};
 
-    const MY_ACCOUNT: [u8; 32] = [7u8; 32];
-    // define KEY constant to match that in the contract
-    const KEY: &str = "special_value";
-    const VALUE: &str = "hello world";
-    const ARG_MESSAGE: &str = "message";
+    const ASSOCIATED_ACCOUNT: &str = "deployment-account";  // the associated account
+    const CONTRACT_WASM: &str = "contract.wasm";            // file to pass to the instance of the EE
 
     #[test]
-    fn should_store_hello_world() {
-        let public_key: PublicKey = SecretKey::ed25519(MY_ACCOUNT).into();
-        let account_addr = AccountHash::from(&public_key);
+    fn should_add_associated_key() {
+        // Initialize an instance of the execution engine and assign it to the builder variable
+        let mut builder = InMemoryWasmTestBuilder::default();
 
-        let mut context = TestContextBuilder::new()
-            .with_public_key(public_key, U512::from(500_000_000_000_000_000u64))
-            .build();
+        // Execute the genesis process
+        builder.run_genesis(&*DEFAULT_RUN_GENESIS_REQUEST).commit();
 
-        // The test framework checks for compiled Wasm files in '<current working dir>/wasm'.  Paths
-        // relative to the current working dir (e.g. 'wasm/contract.wasm') can also be used, as can
-        // absolute paths.
-        let session_code = Code::from("contract.wasm");
-        let session_args = runtime_args! {
-            ARG_MESSAGE => VALUE,
+        // Retrieve the contract wasm from the specified location and assign to the session code variable
+        let session_code = PathBuf::from(CONTRACT_WASM);
+
+        // Retrieve runtime arguments. These should be same as defined in the contract
+        // This allows use to check and assert behavior of the session code
+        let runtime_args = runtime_args! {
+            ASSOCIATED_ACCOUNT => 1
         };
-        let session = SessionBuilder::new(session_code, session_args)
-            .with_address(account_addr)
-            .with_authorization_keys(&[account_addr])
-            .build();
 
-        let result_of_query: Result<Value, Error> =
-            context.run(session).query(account_addr, &[KEY.to_string()]);
+        // Create the execution request that will eventually be executed by the EE
+        // Load the session wasm and pass in the runtime arguments
+        // Sets up the session code to be executed in the default account using auth keys and default account address
+        let execute_request = ExecuteRequestBuilder::standard(
+            *DEFAULT_ACCOUNT_ADDR,
+            COUNTER_DEFINE_WASM,
+            runtime_args,
+        )
+        .build();
 
-        let returned_value = result_of_query.expect("should be a value");
+        // Invoke the EE to execute the session code that we are testing
+        builder
+            .exec(execute_request)
+            .expect_success()
+            .commit();
 
-        let expected_value = Value::from_t(VALUE.to_string()).expect("should construct Value");
-        assert_eq!(expected_value, returned_value);
+        // Verify the results of the execution match our expectations from the contract using the test results
+
+        let account = builder
+        .get_account(*DEFAULT_ACCOUNT_ADDR)
+        .expect("should have account");
+
     }
 }
 

@@ -8,8 +8,7 @@ build-contract:
 test-only:
 	cd tests && cargo test
 
-test: 
-	build-contract
+test: build-contract
 	mkdir -p tests/wasm
 	cp contract/target/wasm32-unknown-unknown/release/contract.wasm tests/wasm
 	cd tests && cargo test
