@@ -19,6 +19,13 @@ mod tests {
         // Execute the genesis process
         builder.run_genesis(&*DEFAULT_RUN_GENESIS_REQUEST).commit();
 
+        let account = builder
+        .get_account(*DEFAULT_ACCOUNT_ADDR)
+        .expect("should have a primary account");
+
+        let associated_keys = account.associated_keys();
+        assert!(!associated_keys.contains_key(&ASSOCIATED_ACCOUNT_HASH));
+
         // Retrieve runtime arguments. These should be same as defined in the contract
         // This allows use to check and assert behavior of the session code
         let runtime_args = runtime_args! {
@@ -43,13 +50,12 @@ mod tests {
 
         // Verify the results of the execution match our expectations from the contract using the test results
 
-        let _account = builder
+        let account = builder
         .get_account(*DEFAULT_ACCOUNT_ADDR)
         .expect("should have a primary account");
 
-        let _associated_account = builder
-        .get_account(ASSOCIATED_ACCOUNT_HASH)
-        .expect("should have an associated account");
+        let associated_keys = account.associated_keys();
+        assert!(associated_keys.contains_key(&ASSOCIATED_ACCOUNT_HASH));
     }
 }
 
