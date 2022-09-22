@@ -1,10 +1,10 @@
 #[cfg(test)]
 mod tests {
     
-    use std::path::PathBuf;
     use casper_engine_test_support::{
     ExecuteRequestBuilder, InMemoryWasmTestBuilder, DEFAULT_RUN_GENESIS_REQUEST, DEFAULT_ACCOUNT_ADDR};
-    use casper_types::{runtime_args};
+    use casper_types::{runtime_args, RuntimeArgs};
+    use casper_types::account::{AccountHash, ActionType, Weight};
 
     const ASSOCIATED_ACCOUNT: &str = "deployment-account";  // the associated account
     const CONTRACT_WASM: &str = "contract.wasm";            // file to pass to the instance of the EE
@@ -17,13 +17,11 @@ mod tests {
         // Execute the genesis process
         builder.run_genesis(&*DEFAULT_RUN_GENESIS_REQUEST).commit();
 
-        // Retrieve the contract wasm from the specified location and assign to the session code variable
-        let session_code = PathBuf::from(CONTRACT_WASM);
-
         // Retrieve runtime arguments. These should be same as defined in the contract
         // This allows use to check and assert behavior of the session code
+        let associated_account: AccountHash = AccountHash::new([127; 32]);
         let runtime_args = runtime_args! {
-            ASSOCIATED_ACCOUNT => 1
+             ASSOCIATED_ACCOUNT => associated_account
         };
 
         // Create the execution request that will eventually be executed by the EE
@@ -31,7 +29,7 @@ mod tests {
         // Sets up the session code to be executed in the default account using auth keys and default account address
         let execute_request = ExecuteRequestBuilder::standard(
             *DEFAULT_ACCOUNT_ADDR,
-            COUNTER_DEFINE_WASM,
+            CONTRACT_WASM,
             runtime_args,
         )
         .build();
@@ -44,7 +42,7 @@ mod tests {
 
         // Verify the results of the execution match our expectations from the contract using the test results
 
-        let account = builder
+        let _account = builder
         .get_account(*DEFAULT_ACCOUNT_ADDR)
         .expect("should have account");
 
