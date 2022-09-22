@@ -6,8 +6,10 @@ mod tests {
     use casper_types::{runtime_args, RuntimeArgs};
     use casper_types::account::{AccountHash};
 
-    const ASSOCIATED_ACCOUNT: &str = "deployment-account";  // the associated account
+    const ASSOCIATED_ACCOUNT_HASH: AccountHash = AccountHash::new([1u8; 32]); // hash of the associated account
+    const ASSOCIATED_ACCOUNT: &str = "deployment-account";  // the associated account argument
     const CONTRACT_WASM: &str = "contract.wasm";            // file to pass to the instance of the EE
+
 
     #[test]
     fn should_add_associated_key() {
@@ -19,9 +21,8 @@ mod tests {
 
         // Retrieve runtime arguments. These should be same as defined in the contract
         // This allows use to check and assert behavior of the session code
-        let second_account: AccountHash = AccountHash::new([127; 32]);
         let runtime_args = runtime_args! {
-            ASSOCIATED_ACCOUNT => second_account
+            ASSOCIATED_ACCOUNT => ASSOCIATED_ACCOUNT_HASH
         };
 
         // Create the execution request that will eventually be executed by the EE
@@ -47,9 +48,8 @@ mod tests {
         .expect("should have a primary account");
 
         let _associated_account = builder
-        .get_account(second_account)
+        .get_account(ASSOCIATED_ACCOUNT_HASH)
         .expect("should have an associated account");
-
     }
 }
 
